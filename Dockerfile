@@ -152,8 +152,6 @@ COPY ./replace.go ./replace.go
 
 RUN go build ./replace.go
 
-EXPOSE 80 443
-
 STOPSIGNAL SIGTERM
 
-CMD ./replace ; nginx -g "daemon off" ;
+CMD ./replace ; nginx -g "daemon off;"
