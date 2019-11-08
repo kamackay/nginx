@@ -1,6 +1,4 @@
-FROM alpine:3.10
-
-LABEL maintainer="NGINX Docker Maintainers <docker-maint@nginx.com>"
+FROM alpine:latest
 
 ENV NGINX_VERSION 1.16.1
 ENV NGX_BROTLI_COMMIT e505dce68acc190cc5a1e780a3b0275e39f160ca 
@@ -76,6 +74,9 @@ RUN GPG_KEYS=B0F4253373F8F6F510D42178520A9993A1C052F8 \
 		git \
 		g++ \
 		cmake \
+	&& apk add --no-cache \
+	go \
+	musl-dev \
 	&& mkdir -p /usr/src \
 	&& cd /usr/src \
 	&& git clone --recursive https://github.com/google/ngx_brotli.git \
@@ -143,13 +144,16 @@ RUN GPG_KEYS=B0F4253373F8F6F510D42178520A9993A1C052F8 \
 	\
 	# forward request and error logs to docker log collector
 	&& ln -sf /dev/stdout /var/log/nginx/access.log \
-	&& ln -sf /dev/stderr /var/log/nginx/error.log
+	&& ln -sf /dev/stderr /var/log/nginx/error.log 
 
 COPY nginx.conf /etc/nginx/nginx.conf
 COPY nginx.vh.default.conf /etc/nginx/conf.d/default.conf
+COPY ./replace.go ./replace.go
+
+RUN go build ./replace.go
 
 EXPOSE 80 443
 
 STOPSIGNAL SIGTERM
 
-CMD ["nginx", "-g", "daemon off;"]
+CMD ./replace ; nginx -g "daemon off" ;
