@@ -1,7 +1,7 @@
-FROM alpine:latest
+FROM alpine:latest as builder
 
-ENV NGINX_VERSION 1.16.1
-ENV NGX_BROTLI_COMMIT e505dce68acc190cc5a1e780a3b0275e39f160ca 
+ENV NGINX_VERSION 1.19.1
+ENV NGX_BROTLI_COMMIT 25f86f0bac1101b6512135eac5f93c49c63609e3 
 
 RUN GPG_KEYS=B0F4253373F8F6F510D42178520A9993A1C052F8 \
 	&& CONFIG="\
@@ -152,6 +152,18 @@ COPY ./replace.go ./replace.go
 
 RUN go build ./replace.go
 
+# Cleanup
+RUN rm -rf /usr/lib/go && \
+	rm -rf usr/lib/gcc && \
+	rm -rf /usr/lib/perl5 && \
+	rm -rf /usr/libexec && \
+	rm -rf /root/.cache
+
 STOPSIGNAL SIGTERM
+
+# Flatten Filesystem
+FROM scratch
+
+COPY --from=builder / /
 
 CMD ./replace ; nginx -g "daemon off;"
